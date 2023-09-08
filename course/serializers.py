@@ -3,6 +3,7 @@ from course.models import Course, Lesson, Payment
 
 
 class LessonSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Lesson
         fields = '__all__'
