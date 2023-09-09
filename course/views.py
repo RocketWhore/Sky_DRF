@@ -11,7 +11,7 @@ from course.serializers import CourseSerializer, LessonSerializer, PaymentSerial
 
 from rest_framework.permissions import IsAuthenticated, BasePermission
 
-from users.permissions import IsOwnerOrStaff, NotModeratorPermissionsAll
+from users.permissions import IsOwnerOrStaff, NotModeratorPermissionsAll, IsUserOrStaff
 
 
 class IsModerator(BasePermission):
@@ -26,6 +26,31 @@ class IsModerator(BasePermission):
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+def get_queryset(self):
+    if self.request.user.groups.filter(name='moderator').exists():
+        return Course.objects.all()
+
+    return Course.objects.filter(user=self.request.user)
+
+
+def get_permissions(self):
+    permission_classes = (IsAuthenticated,)
+
+    if self.action == 'create':
+        permission_classes = (IsModerator,)
+
+    elif self.action == 'destroy':
+        permission_classes = (IsModerator, IsUserOrStaff)
+
+    elif self.action == 'update' or self.action == 'partial_update':
+        permission_classes = (IsModerator | IsUserOrStaff,)
+
+    return [permission() for permission in permission_classes]
 
 
 
